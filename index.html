@@ -132,7 +132,13 @@ const JUSTIN_EMAIL = 'mcgowanjustin1@gmail.com';
 // Google Apps Script web app (apps-script/Code.gs): saves the PDF to Justin's Drive, logs it and emails him.
 const SUBMIT_URL = 'https://script.google.com/macros/s/AKfycbz_S5C-JW4TdpLt7VOAR1PcdK0D76uZ9_03Xx_stNKKByz0vWmgV1j33P2eOLAksdwS/exec';
 const MAX_PEOPLE = 5;                  // the form has room for 1 main + 4 extra
-const ROLES = ['Owner', 'Resident', 'Occupier', 'Tenant', 'Employee'];
+// [what people see, the official word printed on the form]
+const ROLES = [
+  ['Owner – I own the property', 'Owner'],
+  ['Tenant – I rent the property', 'Tenant'],
+  ['Family member living here (e.g. partner, adult child)', 'Resident'],
+  ['Domestic worker / staff', 'Employee'],
+];
 
 // ---- Signature pad --------------------------------------------------------
 function makeSigPad(canvas) {
@@ -189,8 +195,8 @@ function addPerson() {
       ${n > 1 ? '<button type="button" class="link rm">Remove</button>' : ''}</div>
     <div class="f" data-req><label>Full name</label><input name="name" autocomplete="${n === 1 ? 'name' : 'off'}">
       <div class="err">Please enter a full name.</div></div>
-    <div class="f" data-req><label>Owner, resident, occupier, tenant or employee?</label>
-      <select name="role"><option value="">Choose one…</option>${ROLES.map(r => `<option>${r}</option>`).join('')}</select>
+    <div class="f" data-req><label>How are you linked to the property?</label>
+      <select name="role"><option value="">Choose one…</option>${ROLES.map(([label, value]) => `<option value="${value}">${label}</option>`).join('')}</select>
       <div class="err">Please choose one.</div></div>
     <div class="row">
       <div class="f" data-req><label>Cellphone</label><input name="cell" type="tel" autocomplete="${n === 1 ? 'tel' : 'off'}">
