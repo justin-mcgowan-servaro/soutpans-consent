@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soutpans Road Closure Consent</title>
+<meta name="description" content="Fill in and sign the Soutpans road closure consent form on your phone.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f5f2; --card: #ffffff; --ink: #1d2320; --muted: #5d665f;
+    --line: #d5d9d3; --accent: #1f6f4a; --accent-ink: #ffffff; --warn: #b3261e; --note: #eaf3ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141816; --card: #1d2320; --ink: #e8ece9; --muted: #a2aba4;
+      --line: #36403a; --accent: #4fbf87; --accent-ink: #0d1410; --warn: #ff8a80; --note: #203229;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141816; --card: #1d2320; --ink: #e8ece9; --muted: #a2aba4;
+    --line: #36403a; --accent: #4fbf87; --accent-ink: #0d1410; --warn: #ff8a80; --note: #203229;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 1.5rem; line-height: 1.25; margin: 8px 0 4px; }
+  h2 { font-size: 1.1rem; margin: 0 0 12px; }
+  p { margin: 0 0 10px; }
+  .sub { color: var(--muted); margin-bottom: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px; margin-bottom: 16px; }
+  .note { background: var(--note); border: 0; }
+  .note ul { margin: 6px 0 0; padding-left: 20px; }
+  .note li { margin-bottom: 4px; }
+  label { display: block; font-weight: 600; font-size: .92rem; margin: 12px 0 4px; }
+  label .opt { font-weight: 400; color: var(--muted); }
+  input, select { width: 100%; font: inherit; color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row { display: flex; gap: 10px; } .row > div { flex: 1; min-width: 0; }
+  .sigwrap { position: relative; border: 1.5px dashed var(--line); border-radius: 10px; background: #fff; touch-action: none; }
+  .sigwrap canvas { display: block; width: 100%; height: 150px; }
+  .sigwrap .hint { position: absolute; left: 12px; bottom: 8px; color: #8a918c; font-size: .85rem; pointer-events: none; }
+  .sigbar { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: .85rem; color: var(--muted); }
+  button { font: inherit; font-weight: 600; border-radius: 10px; padding: 12px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 100%; padding: 15px; font-size: 1.05rem; }
+  button.link { border: 0; background: none; color: var(--accent); padding: 4px 0; }
+  .personhead { display: flex; justify-content: space-between; align-items: center; }
+  .err { color: var(--warn); font-size: .88rem; margin-top: 4px; display: none; }
+  .invalid .err { display: block; }
+  .invalid input, .invalid select, .invalid .sigwrap { border-color: var(--warn); }
+  #addBtn { width: 100%; margin-bottom: 16px; }
+  #done { display: none; }
+  #done .actions { display: grid; gap: 10px; margin-top: 12px; }
+  #done a.btn { display: block; text-align: center; text-decoration: none; font-weight: 600; border-radius: 10px; padding: 13px; border: 1px solid var(--line); color: var(--ink); background: var(--card); }
+  .small { font-size: .85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Soutpans road closure: consent form</h1>
+  <p class="sub">Takes about 2 minutes. Your answers are placed on the official consent form, which you then send to Justin.</p>
+
+  <section class="card note">
+    <h2>Before you start</h2>
+    <ul>
+      <li><strong>This has nothing to do with money.</strong> It only says you know about the application and support it. Finances come later.</li>
+      <li><strong>Every adult at the house signs:</strong> husband and wife or partners, children over 18, and every domestic worker (live-in or part-time). Add everyone on this one form.</li>
+      <li>We need at least <strong>67%</strong> of residents to sign.</li>
+      <li>Your details are <strong>not stored online</strong>. The form is made on your phone and sent only to Justin.</li>
+    </ul>
+  </section>
+
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>Your house</h2>
+      <div class="row">
+        <div class="f" data-req>
+          <label for="house">House number</label>
+          <input id="house" inputmode="numeric" autocomplete="off">
+          <div class="err">Please enter the house number.</div>
+        </div>
+        <div class="f">
+          <label for="homeTel">Home phone <span class="opt">(optional)</span></label>
+          <input id="homeTel" type="tel" autocomplete="tel">
+        </div>
+      </div>
+      <div class="f" data-req>
+        <label for="address">Address of property</label>
+        <input id="address" autocomplete="street-address" placeholder="e.g. 12 Soutpans Road, …">
+        <div class="err">Please enter the street address.</div>
+      </div>
+    </section>
+
+    <div id="people"></div>
+    <button type="button" id="addBtn">+ Add another adult at this house</button>
+
+    <button type="submit" class="primary" id="submitBtn">Create my signed form</button>
+    <p class="small" style="margin-top:10px">By signing you confirm you are aware of, have read and understood, and support the application for the temporary closure of Soutpans.</p>
+  </form>
+
+  <section class="card" id="done">
+    <h2>✅ Your form is ready</h2>
+    <p>Last step: <strong>send it to Justin</strong>.</p>
+    <div class="actions">
+      <button type="button" class="primary" id="shareBtn">Send on WhatsApp / share</button>
+      <a class="btn" id="downloadLink" download>Download the PDF</a>
+      <a class="btn" id="waLink" target="_blank" rel="noopener">Open WhatsApp chat with Justin</a>
+      <a class="btn" id="mailLink">Email it instead</a>
+    </div>
+    <p class="small" style="margin-top:12px">If the share button doesn't work on your phone, download the PDF and attach it to a WhatsApp message or email to Justin.</p>
+    <button type="button" class="link" id="editBtn">← Go back and make changes</button>
+  </section>
+</main>
+
+<script>
+// ---- Settings -------------------------------------------------------------
+const ROAD_NAME = 'SOUTPANS';          // goes in the blanks at the top of the form
+const JUSTIN_WHATSAPP = '27832865301';            // international format without +, e.g. 27821234567
+const JUSTIN_EMAIL = 'mcgowanjustin1@gmail.com';
+const MAX_PEOPLE = 5;                  // the form has room for 1 main + 4 extra
+const ROLES = ['Owner', 'Resident', 'Occupier', 'Tenant', 'Employee'];
+
+// ---- Signature pad --------------------------------------------------------
+function makeSigPad(canvas) {
+  const ctx = canvas.getContext('2d');
+  let drawing = false, hasInk = false, last = null;
+  function resize() {
+    const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const prev = hasInk ? canvas.toDataURL() : null;
+    canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 2.6; ctx.strokeStyle = '#000';
+    if (prev) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, r.width, r.height); img.src = prev; }
+  }
+  const pos = e => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  canvas.addEventListener('pointerdown', e => { drawing = true; last = pos(e); canvas.setPointerCapture(e.pointerId);
+    ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill(); mark(); });
+  canvas.addEventListener('pointermove', e => { if (!drawing) return; const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => canvas.addEventListener(t, () => drawing = false));
+  function mark() { if (!hasInk) { hasInk = true; canvas.parentElement.querySelector('.hint').style.display = 'none';
+    canvas.closest('.f')?.classList.remove('invalid'); } }
+  requestAnimationFrame(resize); window.addEventListener('resize', resize);
+  return {
+    hasInk: () => hasInk,
+    clear() { ctx.clearRect(0, 0, canvas.width, canvas.height); hasInk = false; canvas.parentElement.querySelector('.hint').style.display = ''; },
+    // Cropped PNG of just the ink, so it sits neatly on the signature line.
+    png() {
+      const { width: w, height: h } = canvas, d = ctx.getImageData(0, 0, w, h).data;
+      let x0 = w, y0 = h, x1 = -1, y1 = -1;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 10) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      const pad = 6; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+      const out = document.createElement('canvas'); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+      out.getContext('2d').drawImage(canvas, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+      return out.toDataURL('image/png');
+    }
+  };
+}
+
+// ---- People cards ---------------------------------------------------------
+const peopleEl = document.getElementById('people');
+const people = [];
+
+function addPerson() {
+  if (people.length >= MAX_PEOPLE) return;
+  const n = people.length + 1;
+  const card = document.createElement('section');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="personhead"><h2>${n === 1 ? 'Person 1 (you)' : 'Person ' + n}</h2>
+      ${n > 1 ? '<button type="button" class="link rm">Remove</button>' : ''}</div>
+    <div class="f" data-req><label>Full name</label><input name="name" autocomplete="${n === 1 ? 'name' : 'off'}">
+      <div class="err">Please enter a full name.</div></div>
+    <div class="f" data-req><label>Owner, resident, occupier, tenant or employee?</label>
+      <select name="role"><option value="">Choose one…</option>${ROLES.map(r => `<option>${r}</option>`).join('')}</select>
+      <div class="err">Please choose one.</div></div>
+    <div class="row">
+      <div class="f" data-req><label>Cellphone</label><input name="cell" type="tel" autocomplete="${n === 1 ? 'tel' : 'off'}">
+        <div class="err">Please enter a cellphone number.</div></div>
+      <div class="f"><label>Work phone <span class="opt">(optional)</span></label><input name="work" type="tel"></div>
+    </div>
+    <div class="f"><label>Email <span class="opt">(optional)</span></label><input name="email" type="email" autocomplete="${n === 1 ? 'email' : 'off'}"></div>
+    <div class="f sig" data-req><label>Signature</label>
+      <div class="sigwrap"><canvas></canvas><span class="hint">Sign here with your finger</span></div>
+      <div class="sigbar"><span>${n === 1 ? '' : 'Hand the phone to this person to sign.'}</span><button type="button" class="link clr">Clear</button></div>
+      <div class="err">Please sign in the box.</div></div>`;
+  peopleEl.appendChild(card);
+  const pad = makeSigPad(card.querySelector('canvas'));
+  card.querySelector('.clr').onclick = () => pad.clear();
+  const person = { card, pad };
+  card.querySelector('.rm')?.addEventListener('click', () => { card.remove(); people.splice(people.indexOf(person), 1); renumber(); });
+  card.querySelectorAll('input,select').forEach(i => i.addEventListener('input', () => i.closest('.f').classList.remove('invalid')));
+  people.push(person);
+  renumber();
+}
+function renumber() {
+  people.forEach((p, i) => p.card.querySelector('h2').textContent = i === 0 ? 'Person 1 (you)' : 'Person ' + (i + 1));
+  document.getElementById('addBtn').style.display = people.length >= MAX_PEOPLE ? 'none' : '';
+}
+document.getElementById('addBtn').onclick = addPerson;
+addPerson();
+document.querySelectorAll('#house,#address').forEach(i => i.addEventListener('input', () => i.closest('.f').classList.remove('invalid')));
+
+function validate() {
+  let first = null;
+  document.querySelectorAll('.f[data-req]').forEach(f => {
+    const ctl = f.querySelector('input,select');
+    const ok = f.classList.contains('sig') ? people.find(p => p.card.contains(f)).pad.hasInk() : ctl.value.trim() !== '';
+    f.classList.toggle('invalid', !ok);
+    if (!ok && !first) first = f;
+  });
+  if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return !first;
+}
+
+// ---- PDF: rebuilds the consent form layout (A4, 2 pages) -------------------
+const clean = s => (s || '').replace(/[^\x20-\x7E -ÿ]/g, '').trim();
+
+async function buildPdf(data) {
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const doc = await PDFDocument.create();
+  doc.setTitle(`Road closure consent - ${ROAD_NAME} - House ${data.house}`);
+  const R = await doc.embedFont(StandardFonts.Helvetica);
+  const B = await doc.embedFont(StandardFonts.HelveticaBold);
+  const W = 595.28, H = 841.89, L = 54, RM = W - 54, black = rgb(0, 0, 0);
+  let page, y;
+  const newPage = () => { page = doc.addPage([W, H]); y = H - 66; };
+
+  const wrap = (str, f, size, maxW) => {
+    const words = str.split(' '), lines = []; let cur = '';
+    for (const w of words) { const t = cur ? cur + ' ' + w : w;
+      if (f.widthOfTextAtSize(t, size) > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+    if (cur) lines.push(cur); return lines;
+  };
+  const para = (str, { f = R, size = 11, center = false, gap = 15, under = false } = {}) => {
+    for (const ln of wrap(str, f, size, RM - L)) {
+      const tw = f.widthOfTextAtSize(ln, size), x = center ? (W - tw) / 2 : L;
+      page.drawText(ln, { x, y, size, font: f, color: black });
+      if (under) page.drawLine({ start: { x, y: y - 1.5 }, end: { x: x + tw, y: y - 1.5 }, thickness: 0.7, color: black });
+      y -= gap;
+    }
+  };
+  // Label in bold, then a rule to `end` with the value written on it.
+  const field = (label, value, { x = L, end = RM, gap = 27, lf = B } = {}) => {
+    page.drawText(label, { x, y, size: 11, font: lf, color: black });
+    const lx = x + lf.widthOfTextAtSize(label, 11) + 6;
+    page.drawLine({ start: { x: lx, y: y - 2 }, end: { x: end, y: y - 2 }, thickness: 0.6, color: black });
+    let v = clean(value), size = 11.5; const room = end - lx - 8;
+    while (v && R.widthOfTextAtSize(v, size) > room && size > 7) size -= 0.5;
+    if (v) page.drawText(v, { x: lx + 4, y: y + 1, size, font: R, color: black });
+    y -= gap;
+  };
+  const signedDated = async (sigPng, date) => {
+    y -= 36;
+    page.drawText('signed', { x: L, y, size: 11, font: R, color: black });
+    const sx = L + R.widthOfTextAtSize('signed', 11) + 4, sEnd = L + 260;
+    page.drawLine({ start: { x: sx, y: y - 2 }, end: { x: sEnd, y: y - 2 }, thickness: 0.6, color: black });
+    if (sigPng) {
+      const img = await doc.embedPng(sigPng);
+      const maxW = sEnd - sx - 10, maxH = 36, s = Math.min(maxW / img.width, maxH / img.height);
+      page.drawImage(img, { x: sx + 6, y: y - 4, width: img.width * s, height: img.height * s });
+    }
+    field('dated', date, { x: L + 290, lf: R, gap: 0 });
+    y -= 30;
+  };
+  const extraBlock = async p => {
+    field('Full Name (s)', p?.name, { gap: 22 });
+    field('SPECIFY IF OWNER/ RESIDENT/OCCUPIER/TENANT OR EMPLOYEE', p?.role, { gap: 22 });
+    field('WORK TELEPHONE NUMBER:', p?.work, { end: L + 380, gap: 22 });
+    field('CELLPHONE NUMBER:', p?.cell, { end: L + 380, gap: 22 });
+    field('EMAIL ADDRESS:', p?.email, { end: L + 380, gap: 6 });
+    await signedDated(p?.sig, p?.date);
+    y -= 8;
+  };
+
+  // Page 1
+  newPage();
+  para(`CONSENT FORM FOR THE APPLICATION OF A ROAD CLOSURE FOR ${ROAD_NAME}`, { f: B, size: 13, center: true, gap: 18 });
+  y -= 10;
+  para('PLEASE COMPLETE FULLY, PLEASE PRINT CLEARLY - USE BLACK INK', { f: B, size: 13, center: true, gap: 10 });
+  page.drawLine({ start: { x: L, y }, end: { x: RM, y }, thickness: 1, color: black }); y -= 26;
+  para('TO WHOM IT MAY CONCERN'); para('CITY OF JOHANNESBURG'); y -= 4; para('Dear Sirs'); y -= 6;
+  para(`RE:  SECURITY ACCESS RESTRICTION APPLICATION FOR THE TEMPORARY CLOSURE OF ${ROAD_NAME}`, { f: B });
+  para('IN TERMS OF SECTION 45 OF THE RATIONALISATION OF LOCAL GOVERNMENT AFFARIS ACT 10 OF 1998', { f: B, center: true });
+  y -= 6;
+  para('I/We the undersigned:', { f: B, gap: 17 });
+  for (const b of ['are aware of the proposed application;', 'Hereby support the renewal of the closure;',
+    'have read and understood the application.', 'support the application for the reasons set out in the application.']) {
+    page.drawText('*', { x: L + 6, y, size: 11, font: B, color: black });
+    page.drawText(b, { x: L + 24, y, size: 11, font: R, color: black }); y -= 16;
+  }
+  y -= 14;
+  page.drawText('My contact details are as follows:', { x: L, y, size: 11, font: R, color: black });
+  const hx = L + 215;
+  page.drawText('HOUSE NUMBER', { x: hx, y, size: 18, font: B, color: black });
+  const hvx = hx + B.widthOfTextAtSize('HOUSE NUMBER', 18) + 8;
+  page.drawLine({ start: { x: hvx, y: y - 2 }, end: { x: RM, y: y - 2 }, thickness: 0.8, color: black });
+  page.drawText(clean(data.house), { x: hvx + 6, y, size: 18, font: R, color: black });
+  y -= 34;
+
+  const p1 = data.people[0];
+  field('FULL NAME (S):', p1.name);
+  field('ADDRESS OF PROPERTY:', data.address);
+  field('', '', { gap: 27 });
+  field('SPECIFY IF OWNER/ RESIDENT/OCCUPIER/TENANT OR EMPLOYEE:', p1.role);
+  field('HOME TELEPHONE NUMBER:', data.homeTel, { end: L + 380 });
+  field('WORK TELEPHONE NUMBER:', p1.work, { end: L + 380 });
+  field('CELLPHONE NUMBER:', p1.cell, { end: L + 380 });
+  field('EMAIL ADDRESS:', p1.email, { end: L + 380, gap: 6 });
+  await signedDated(p1.sig, p1.date);
+  y -= 4;
+  para('(if more than one person living / working in the same premises please see over page )', { f: B, under: true });
+  para('The street address must be the same as the above  The home telephone number must be the same as above', { f: B, under: true });
+
+  // Page 2: four extra-person blocks (blank ones left for pen)
+  newPage();
+  for (let i = 1; i < 5; i++) await extraBlock(data.people[i]);
+
+  return doc.save();
+}
+
+// ---- Submit & share -------------------------------------------------------
+let pdfFile = null, pdfUrl = null;
+const today = () => new Date().toLocaleDateString('en-ZA', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validate()) return;
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Creating your form…';
+  try {
+    const data = {
+      house: document.getElementById('house').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      homeTel: document.getElementById('homeTel').value.trim(),
+      people: people.map(p => {
+        const v = n => p.card.querySelector(`[name=${n}]`).value.trim();
+        return { name: v('name'), role: v('role'), cell: v('cell'), work: v('work'), email: v('email'), sig: p.pad.png(), date: today() };
+      })
+    };
+    const bytes = await buildPdf(data);
+    const fname = `Soutpans consent - House ${clean(data.house).replace(/[\\/:*?"<>|]/g, '-')}.pdf`;
+    pdfFile = new File([bytes], fname, { type: 'application/pdf' });
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    pdfUrl = URL.createObjectURL(pdfFile);
+    const dl = document.getElementById('downloadLink'); dl.href = pdfUrl; dl.download = fname;
+    const msg = `Soutpans road closure consent form - House ${data.house} (${data.people.length} signature${data.people.length > 1 ? 's' : ''})`;
+    const wa = document.getElementById('waLink'), ml = document.getElementById('mailLink');
+    wa.style.display = JUSTIN_WHATSAPP ? '' : 'none';
+    wa.href = `https://wa.me/${JUSTIN_WHATSAPP}?text=${encodeURIComponent(msg + ' (PDF attached)')}`;
+    ml.style.display = JUSTIN_EMAIL ? '' : 'none';
+    ml.href = `mailto:${JUSTIN_EMAIL}?subject=${encodeURIComponent(msg)}&body=${encodeURIComponent('Please find my signed consent form attached.')}`;
+    document.getElementById('shareBtn').dataset.msg = msg;
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('done').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error(err); alert('Sorry, something went wrong creating the form. Please try again.');
+  } finally { btn.disabled = false; btn.textContent = 'Create my signed form'; }
+});
+
+document.getElementById('shareBtn').onclick = async () => {
+  const msg = document.getElementById('shareBtn').dataset.msg;
+  if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+    try { await navigator.share({ files: [pdfFile], title: msg, text: msg }); } catch (_) { /* user cancelled */ }
+  } else {
+    document.getElementById('downloadLink').click();
+  }
+};
+document.getElementById('editBtn').onclick = () => {
+  document.getElementById('done').style.display = 'none';
+  document.getElementById('form').style.display = '';
+};
+</script>
+</body>
+</html>
