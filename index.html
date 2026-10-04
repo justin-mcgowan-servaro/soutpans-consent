@@ -56,6 +56,10 @@
   #done .actions { display: grid; gap: 10px; margin-top: 12px; }
   #done a.btn { display: block; text-align: center; text-decoration: none; font-weight: 600; border-radius: 10px; padding: 13px; border: 1px solid var(--line); color: var(--ink); background: var(--card); }
   .small { font-size: .85rem; color: var(--muted); }
+  #sending { text-align: center; padding: 18px 0 8px; }
+  .spinner { width: 46px; height: 46px; margin: 0 auto 14px; border-radius: 50%;
+    border: 5px solid var(--line); border-top-color: var(--accent); animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -102,6 +106,11 @@
   </form>
 
   <section class="card" id="done">
+    <div id="sending" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <p><strong>Sending your form to Justin…</strong></p>
+      <p class="small">⚠️ Please don't close this page until you see the green tick. This takes a few seconds.</p>
+    </div>
     <h2 id="doneTitle">✅ Your form is ready</h2>
     <p id="doneLead">Last step: <strong>send it to Justin</strong>.</p>
     <div class="actions">
@@ -131,14 +140,17 @@ function makeSigPad(canvas) {
   let drawing = false, hasInk = false, last = null;
   function resize() {
     const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    // Skip while hidden (width 0) or when only the height changed (phone keyboard / address bar):
+    // resizing a canvas wipes it.
+    if (!r.width || Math.floor(r.width * dpr) === canvas.width) return;
     const prev = hasInk ? canvas.toDataURL() : null;
-    canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+    canvas.width = Math.floor(r.width * dpr); canvas.height = Math.floor(r.height * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 2.6; ctx.strokeStyle = '#000';
     if (prev) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, r.width, r.height); img.src = prev; }
   }
   const pos = e => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  canvas.addEventListener('pointerdown', e => { drawing = true; last = pos(e); canvas.setPointerCapture(e.pointerId);
+  canvas.addEventListener('pointerdown', e => { resize(); drawing = true; last = pos(e); canvas.setPointerCapture(e.pointerId);
     ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill(); mark(); });
   canvas.addEventListener('pointermove', e => { if (!drawing) return; const p = pos(e);
     ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; });
@@ -377,9 +389,15 @@ function setDone(title, lead, showSend) {
   document.getElementById('doneLead').innerHTML = lead;
   document.querySelectorAll('#done .sendonly').forEach(el => el.hidden = !showSend);
 }
+// While sending: show only the spinner, and ask the browser to warn if they try to leave.
+const warnLeave = e => { e.preventDefault(); e.returnValue = ''; };
+function showSending(on) {
+  document.getElementById('sending').hidden = !on;
+  document.querySelectorAll('#doneTitle, #doneLead, #done .actions, #editBtn').forEach(el => el.hidden = on);
+  if (on) window.addEventListener('beforeunload', warnLeave); else window.removeEventListener('beforeunload', warnLeave);
+}
 async function sendToJustin(bytes, fname, data, msg) {
-  setDone('Sending your form to Justin…', 'Please keep this page open for a few seconds.', false);
-  document.getElementById('editBtn').hidden = true;
+  showSending(true);
   try {
     let bin = '';
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
@@ -399,7 +417,7 @@ async function sendToJustin(bytes, fname, data, msg) {
     console.error(err);
     setDone('✅ Your form is ready', 'We couldn\'t send it automatically. Please <strong>send it to Justin</strong> using the button below.', true);
   }
-  document.getElementById('editBtn').hidden = false;
+  showSending(false);
 }
 
 document.getElementById('shareBtn').onclick = async () => {
