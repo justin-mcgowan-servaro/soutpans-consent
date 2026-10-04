@@ -319,6 +319,11 @@ async function buildPdf(data) {
   newPage();
   for (let i = 1; i < 5; i++) await extraBlock(data.people[i]);
 
+  // Embed the raw answers so forms from the same house can be merged into one later.
+  const json = JSON.stringify({ version: 1, road: ROAD_NAME, ...data });
+  await doc.attach(new TextEncoder().encode(json), 'consent-data.json',
+    { mimeType: 'application/json', description: 'Form answers for merging' });
+
   return doc.save();
 }
 
