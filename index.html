@@ -22,6 +22,7 @@
     --line: #36403a; --accent: #4fbf87; --accent-ink: #0d1410; --warn: #ff8a80; --note: #203229;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--bg); color: var(--ink);
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   main { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
@@ -60,7 +61,7 @@
 <body>
 <main>
   <h1>Soutpans road closure: consent form</h1>
-  <p class="sub">Takes about 2 minutes. Your answers are placed on the official consent form, which you then send to Justin.</p>
+  <p class="sub">Takes about 2 minutes. Your answers are placed on the official consent form and sent straight to Justin.</p>
 
   <section class="card note">
     <h2>Before you start</h2>
@@ -68,7 +69,7 @@
       <li><strong>This has nothing to do with money.</strong> It is only for consent: it says you know about the application and support it.</li>
       <li><strong>Every adult at the house signs:</strong> husband and wife or partners, children over 18, and every domestic worker (live-in or part-time). Add everyone on this one form.</li>
       <li>We need at least <strong>67%</strong> of residents to sign.</li>
-      <li>Your details are <strong>not stored online</strong>. The form is made on your phone and sent only to Justin.</li>
+      <li>Your form is sent <strong>privately to Justin</strong> (his email and Google Drive) and used only for the road closure application.</li>
     </ul>
   </section>
 
@@ -96,20 +97,20 @@
     <div id="people"></div>
     <button type="button" id="addBtn">+ Add another adult at this house</button>
 
-    <button type="submit" class="primary" id="submitBtn">Create my signed form</button>
+    <button type="submit" class="primary" id="submitBtn">Sign &amp; send to Justin</button>
     <p class="small" style="margin-top:10px">By signing you confirm you are aware of, have read and understood, and support the application for the temporary closure of Soutpans.</p>
   </form>
 
   <section class="card" id="done">
-    <h2>✅ Your form is ready</h2>
-    <p>Last step: <strong>send it to Justin</strong>.</p>
+    <h2 id="doneTitle">✅ Your form is ready</h2>
+    <p id="doneLead">Last step: <strong>send it to Justin</strong>.</p>
     <div class="actions">
-      <button type="button" class="primary" id="shareBtn">Send on WhatsApp / share</button>
+      <button type="button" class="primary sendonly" id="shareBtn">Send on WhatsApp / share</button>
       <a class="btn" id="downloadLink" download>Download the PDF</a>
-      <a class="btn" id="waLink" target="_blank" rel="noopener">Open WhatsApp chat with Justin</a>
-      <a class="btn" id="mailLink">Email it instead</a>
+      <a class="btn sendonly" id="waLink" target="_blank" rel="noopener">Open WhatsApp chat with Justin</a>
+      <a class="btn sendonly" id="mailLink">Email it instead</a>
     </div>
-    <p class="small" style="margin-top:12px">If the share button doesn't work on your phone, download the PDF and attach it to a WhatsApp message or email to Justin.</p>
+    <p class="small sendonly" style="margin-top:12px">If the share button doesn't work on your phone, download the PDF and attach it to a WhatsApp message or email to Justin.</p>
     <button type="button" class="link" id="editBtn">← Go back and make changes</button>
   </section>
 </main>
@@ -119,6 +120,8 @@
 const ROAD_NAME = 'SOUTPANS';          // goes in the blanks at the top of the form
 const JUSTIN_WHATSAPP = '27832865301';            // international format without +, e.g. 27821234567
 const JUSTIN_EMAIL = 'mcgowanjustin1@gmail.com';
+// Google Apps Script web app (apps-script/Code.gs): saves the PDF to Justin's Drive, logs it and emails him.
+const SUBMIT_URL = 'https://script.google.com/macros/s/AKfycbz_S5C-JW4TdpLt7VOAR1PcdK0D76uZ9_03Xx_stNKKByz0vWmgV1j33P2eOLAksdwS/exec';
 const MAX_PEOPLE = 5;                  // the form has room for 1 main + 4 extra
 const ROLES = ['Owner', 'Resident', 'Occupier', 'Tenant', 'Employee'];
 
@@ -362,10 +365,42 @@ document.getElementById('form').addEventListener('submit', async e => {
     document.getElementById('form').style.display = 'none';
     document.getElementById('done').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (SUBMIT_URL) await sendToJustin(bytes, fname, data, msg);
   } catch (err) {
     console.error(err); alert('Sorry, something went wrong creating the form. Please try again.');
-  } finally { btn.disabled = false; btn.textContent = 'Create my signed form'; }
+  } finally { btn.disabled = false; btn.textContent = 'Sign & send to Justin'; }
 });
+
+// Send the PDF straight to Justin. If it fails, the manual share buttons stay as a fallback.
+function setDone(title, lead, showSend) {
+  document.getElementById('doneTitle').textContent = title;
+  document.getElementById('doneLead').innerHTML = lead;
+  document.querySelectorAll('#done .sendonly').forEach(el => el.hidden = !showSend);
+}
+async function sendToJustin(bytes, fname, data, msg) {
+  setDone('Sending your form to Justin…', 'Please keep this page open for a few seconds.', false);
+  document.getElementById('editBtn').hidden = true;
+  try {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    const res = await fetch(SUBMIT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request, no CORS preflight
+      body: JSON.stringify({
+        pdf: btoa(bin), filename: fname.replace(/\.pdf$/, ` - ${clean(data.people[0].name)} - ${stamp}.pdf`),
+        house: data.house, address: data.address, names: data.people.map(p => p.name), subject: msg
+      })
+    });
+    const out = await res.json();
+    if (!out.ok) throw new Error(out.error);
+    setDone('✅ Sent to Justin, thank you!', 'Your signed form has been received. <strong>There is nothing else you need to do.</strong> You can download a copy for yourself below.', false);
+  } catch (err) {
+    console.error(err);
+    setDone('✅ Your form is ready', 'We couldn\'t send it automatically. Please <strong>send it to Justin</strong> using the button below.', true);
+  }
+  document.getElementById('editBtn').hidden = false;
+}
 
 document.getElementById('shareBtn').onclick = async () => {
   const msg = document.getElementById('shareBtn').dataset.msg;
