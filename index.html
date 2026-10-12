@@ -99,7 +99,7 @@
         </div>
       </div>
       <div class="f" data-req>
-        <label for="address">Address of property</label>
+        <label for="address">Address of property <span class="opt">(fills in by itself, change it if needed)</span></label>
         <input id="address" autocomplete="street-address" placeholder="e.g. 12 Soutpans Avenue, Quellerina">
         <div class="err">Please enter the street address.</div>
       </div>
@@ -230,6 +230,18 @@ function renumber() {
 document.getElementById('addBtn').onclick = addPerson;
 addPerson();
 document.querySelectorAll('#house,#address').forEach(i => i.addEventListener('input', () => i.closest('.f').classList.remove('invalid')));
+// Fill the address from street + house number, until the person edits it themselves.
+const addr = document.getElementById('address');
+let addrEdited = false;
+addr.addEventListener('input', () => addrEdited = addr.value.trim() !== '');
+function fillAddress() {
+  if (addrEdited) return;
+  const n = document.getElementById('house').value.trim(), st = document.getElementById('street').value;
+  addr.value = n ? `${n} ${st === 'Soutpans' ? 'Soutpans Avenue' : st}, Quellerina` : '';
+  if (n) addr.closest('.f').classList.remove('invalid');
+}
+document.getElementById('house').addEventListener('input', fillAddress);
+document.getElementById('street').addEventListener('change', fillAddress);
 
 function validate() {
   let first = null;
