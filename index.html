@@ -64,7 +64,7 @@
 </head>
 <body>
 <main>
-  <h1>Soutpans road closure: consent form</h1>
+  <h1>Quellerina road closure: consent form</h1>
   <p class="sub">Takes about 2 minutes. Your answers are placed on the official consent form and sent straight to Justin.</p>
 
   <section class="card note">
@@ -80,6 +80,13 @@
   <form id="form" novalidate>
     <section class="card">
       <h2>Your house</h2>
+      <div class="f" data-req>
+        <label for="street">Street</label>
+        <select id="street">
+          <option>Soutpans</option><option>Sophia</option><option>Kessel</option><option>Johannes</option>
+          <option>Short</option><option>Wilson</option><option>Badenhorst</option>
+        </select>
+      </div>
       <div class="row">
         <div class="f" data-req>
           <label for="house">House number</label>
@@ -93,7 +100,7 @@
       </div>
       <div class="f" data-req>
         <label for="address">Address of property</label>
-        <input id="address" autocomplete="street-address" placeholder="e.g. 12 Soutpans Road, …">
+        <input id="address" autocomplete="street-address" placeholder="e.g. 12 Soutpans Avenue, Quellerina">
         <div class="err">Please enter the street address.</div>
       </div>
     </section>
@@ -102,7 +109,7 @@
     <button type="button" id="addBtn">+ Add another adult at this house</button>
 
     <button type="submit" class="primary" id="submitBtn">Sign &amp; send to Justin</button>
-    <p class="small" style="margin-top:10px">By signing you confirm you are aware of, have read and understood, and support the application for the temporary closure of Soutpans.</p>
+    <p class="small" style="margin-top:10px">By signing you confirm you are aware of, have read and understood, and support the application for the temporary closure of your street.</p>
   </form>
 
   <section class="card" id="done">
@@ -126,7 +133,6 @@
 
 <script>
 // ---- Settings -------------------------------------------------------------
-const ROAD_NAME = 'SOUTPANS';          // goes in the blanks at the top of the form
 const JUSTIN_WHATSAPP = '27832865301';            // international format without +, e.g. 27821234567
 const JUSTIN_EMAIL = 'mcgowanjustin1@gmail.com';
 // Google Apps Script web app (apps-script/Code.gs): saves the PDF to Justin's Drive, logs it and emails him.
@@ -243,6 +249,7 @@ const clean = s => (s || '').replace(/[^\x20-\x7E -ÿ]/g, '').trim();
 async function buildPdf(data) {
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const doc = await PDFDocument.create();
+  const ROAD_NAME = data.street.toUpperCase();   // goes in the blanks at the top of the form
   doc.setTitle(`Road closure consent - ${ROAD_NAME} - House ${data.house}`);
   const R = await doc.embedFont(StandardFonts.Helvetica);
   const B = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -358,7 +365,9 @@ document.getElementById('form').addEventListener('submit', async e => {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = 'Creating your form…';
   try {
+    const street = document.getElementById('street').value;
     const data = {
+      street,
       house: document.getElementById('house').value.trim(),
       address: document.getElementById('address').value.trim(),
       homeTel: document.getElementById('homeTel').value.trim(),
@@ -368,12 +377,13 @@ document.getElementById('form').addEventListener('submit', async e => {
       })
     };
     const bytes = await buildPdf(data);
-    const fname = `Soutpans consent - House ${clean(data.house).replace(/[\\/:*?"<>|]/g, '-')}.pdf`;
+    data.label = street === 'Soutpans' ? data.house : `${data.house} ${street}`;
+    const fname = `Soutpans consent - House ${clean(data.label).replace(/[\\/:*?"<>|]/g, '-')}.pdf`;
     pdfFile = new File([bytes], fname, { type: 'application/pdf' });
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     pdfUrl = URL.createObjectURL(pdfFile);
     const dl = document.getElementById('downloadLink'); dl.href = pdfUrl; dl.download = fname;
-    const msg = `Soutpans road closure consent form - House ${data.house} (${data.people.length} signature${data.people.length > 1 ? 's' : ''})`;
+    const msg = `Soutpans road closure consent form - House ${data.label} (${data.people.length} signature${data.people.length > 1 ? 's' : ''})`;
     const wa = document.getElementById('waLink'), ml = document.getElementById('mailLink');
     wa.style.display = JUSTIN_WHATSAPP ? '' : 'none';
     wa.href = `https://wa.me/${JUSTIN_WHATSAPP}?text=${encodeURIComponent(msg + ' (PDF attached)')}`;
@@ -413,7 +423,7 @@ async function sendToJustin(bytes, fname, data, msg) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request, no CORS preflight
       body: JSON.stringify({
         pdf: btoa(bin), filename: fname.replace(/\.pdf$/, ` - ${clean(data.people[0].name)} - ${stamp}.pdf`),
-        house: data.house, address: data.address, names: data.people.map(p => p.name), subject: msg
+        house: data.label, address: data.address, names: data.people.map(p => p.name), subject: msg
       })
     });
     const out = await res.json();
