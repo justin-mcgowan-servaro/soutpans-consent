@@ -85,7 +85,13 @@
         <select id="street">
           <option>Soutpans</option><option>Sophia</option><option>Kessel</option><option>Johannes</option>
           <option>Short</option><option>Wilson</option><option>Badenhorst</option>
+          <option value="__other">Other street…</option>
         </select>
+      </div>
+      <div class="f" data-req id="streetOtherWrap" hidden>
+        <label for="streetOther">Street name</label>
+        <input id="streetOther" autocomplete="off" placeholder="e.g. Davidson">
+        <div class="err">Please enter the street name.</div>
       </div>
       <div class="row">
         <div class="f" data-req>
@@ -229,23 +235,36 @@ function renumber() {
 }
 document.getElementById('addBtn').onclick = addPerson;
 addPerson();
-document.querySelectorAll('#house,#address').forEach(i => i.addEventListener('input', () => i.closest('.f').classList.remove('invalid')));
+document.querySelectorAll('#house,#address,#streetOther').forEach(i => i.addEventListener('input', () => i.closest('.f').classList.remove('invalid')));
+// Street: one of the listed ones, or whatever they type under "Other street…" (so a road that
+// isn't in the list yet can still be submitted and tracked).
+const streetSel = document.getElementById('street'), streetOther = document.getElementById('streetOther');
+function streetName() {
+  return streetSel.value === '__other' ? streetOther.value.trim().replace(/\s+/g, ' ') : streetSel.value;
+}
+streetSel.addEventListener('change', () => {
+  const other = streetSel.value === '__other';
+  document.getElementById('streetOtherWrap').hidden = !other;
+  if (other) streetOther.focus();
+});
 // Fill the address from street + house number, until the person edits it themselves.
 const addr = document.getElementById('address');
 let addrEdited = false;
 addr.addEventListener('input', () => addrEdited = addr.value.trim() !== '');
 function fillAddress() {
   if (addrEdited) return;
-  const n = document.getElementById('house').value.trim(), st = document.getElementById('street').value;
-  addr.value = n ? `${n} ${st === 'Soutpans' ? 'Soutpans Avenue' : st}, Quellerina` : '';
+  const n = document.getElementById('house').value.trim(), st = streetName();
+  addr.value = n ? `${[n, st === 'Soutpans' ? 'Soutpans Avenue' : st].filter(Boolean).join(' ')}, Quellerina` : '';
   if (n) addr.closest('.f').classList.remove('invalid');
 }
 document.getElementById('house').addEventListener('input', fillAddress);
-document.getElementById('street').addEventListener('change', fillAddress);
+streetSel.addEventListener('change', fillAddress);
+streetOther.addEventListener('input', fillAddress);
 
 function validate() {
   let first = null;
   document.querySelectorAll('.f[data-req]').forEach(f => {
+    if (f.hidden) return;   // e.g. the "Other street" box when a listed street is chosen
     const ctl = f.querySelector('input,select');
     const ok = f.classList.contains('sig') ? people.find(p => p.card.contains(f)).pad.hasInk() : ctl.value.trim() !== '';
     f.classList.toggle('invalid', !ok);
@@ -377,7 +396,7 @@ document.getElementById('form').addEventListener('submit', async e => {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = 'Creating your form…';
   try {
-    const street = document.getElementById('street').value;
+    const street = streetName();
     const data = {
       street,
       house: document.getElementById('house').value.trim(),
