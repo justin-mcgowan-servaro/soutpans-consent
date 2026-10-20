@@ -14,14 +14,24 @@ Open the script project, replace the contents of `Code.gs` with this repo's `app
 
 ## 2. Script Properties (Project Settings, gear icon, "Script Properties")
 
-Start with the PayFast sandbox:
+Start with the PayFast sandbox. Use **your own sandbox credentials**, not the shared test merchant
+10000100 printed in PayFast's docs: as of 2026-10-20 the sandbox rejects PayFast's own documented example
+with those credentials ("Generated signature does not match"), so they are stale.
+
+1. Go to https://sandbox.payfast.co.za and log in with the email of your PayFast Individual account
+   (it creates a sandbox merchant for you).
+2. Settings, Integration: copy the sandbox Merchant ID and Merchant Key and set a Security Passphrase.
+3. Script Properties:
 
 | Property | Sandbox value |
 |---|---|
-| `PF_MERCHANT_ID` | `10000100` |
-| `PF_MERCHANT_KEY` | `46f0cd694581a` |
-| `PF_PASSPHRASE` | `jt7NOE43FZPn` |
+| `PF_MERCHANT_ID` | sandbox merchant ID |
+| `PF_MERCHANT_KEY` | sandbox merchant key |
+| `PF_PASSPHRASE` | the sandbox passphrase you set |
 | `PF_SANDBOX` | `true` |
+
+If the sandbox login gives trouble, skip it: the signing code is verified byte-for-byte against PayFast's
+documented example, so go straight to live (section 5) and do the R20 self-test there.
 
 ## 3. Deploy a new version
 
@@ -34,7 +44,7 @@ The first run that touches Drive/Gmail/UrlFetch may ask you to re-authorise the 
 
 1. Open https://justin-mcgowan-servaro.github.io/soutpans-consent/contribute.html
 2. Monthly, R150, pick a day a few days from now, your own email. Continue.
-3. On the PayFast sandbox page pay with the test buyer: `sbtu01@payfast.io` / `clientpass` (or any sandbox test card it offers).
+3. On the PayFast sandbox page pay with the sandbox buyer wallet or test card it offers.
 4. Expect: redirect back to the thank-you page; a row in the Drive sheet "Soutpans contributions" ("Started", then "COMPLETE" with Check = verified); an email to you.
 5. Also run a once-off and a cancel (cancel button on the PayFast page lands on the "Payment cancelled" screen).
 
