@@ -11,6 +11,22 @@ Secrets live in Script Properties, never in the repo or the page.
 ## 1. Paste the code
 
 Open the script project, replace the contents of `Code.gs` with this repo's `apps-script/Code.gs`, save.
+Also tick Project Settings, "Show 'appsscript.json' manifest file in editor" and make `appsscript.json` match
+this repo's copy: it pins the four OAuth scopes the script needs (Drive, Sheets, Gmail, external requests).
+
+### Authorisation
+
+The script's existing grant (from 4 Oct 2026) covers Drive, Sheets and Gmail only. The PayFast "validate"
+call needs "Connect to an external service" as well, and Google does not re-prompt for a new scope on its
+own: running from the editor and redeploying both silently keep the old grant, and the validate call
+fails with "You do not have permission to call UrlFetchApp.fetch". To fix it once:
+
+1. https://myaccount.google.com/connections, "Soutpans consent", "Delete all" (revokes the old grant).
+2. Back in the editor pick `testPayfastReachable` in the function dropdown and Run. Approve the
+   consent screen (all four scopes). The log should end with `HTTP 200 INVALID` (the test payload is
+   made up; the point is that PayFast answered).
+
+Until that is done, ITN rows still arrive but Check reads `UNVERIFIED (sig true, server false [...], merchant true)`.
 
 ## 2. Script Properties (Project Settings, gear icon, "Script Properties")
 
@@ -45,10 +61,15 @@ The first run that touches Drive/Gmail/UrlFetch may ask you to re-authorise the 
 1. Open https://justin-mcgowan-servaro.github.io/soutpans-consent/contribute.html
 2. Monthly, R150, pick a day a few days from now, your own email. Continue.
 3. On the PayFast sandbox page pay with the sandbox buyer wallet or test card it offers.
+   Use a different email from the sandbox account's own, e.g. `you+test@gmail.com`: PayFast refuses a buyer
+   whose email equals the merchant's ("Merchant is unable to receive payments from the same account").
 4. Expect: redirect back to the thank-you page; a row in the Drive sheet "Soutpans contributions" ("Started", then "COMPLETE" with Check = verified); an email to you.
 5. Also run a once-off and a cancel (cancel button on the PayFast page lands on the "Payment cancelled" screen).
 
-If the "COMPLETE" row never appears but the payment shows in the sandbox dashboard, the ITN did not reach the script (Apps Script answers with a redirect, which PayFast's notifier may not follow). The subscription still works; only the automatic tracker row is missing. Fallback: PayFast dashboard, Recurring billing, export.
+The sandbox ITN list shows every notification as "Pending QUEUE / cURL Error" with a 302 response. That is
+expected: Apps Script answers every POST with a redirect, and PayFast's notifier does not follow it, but the
+script has already run by then (check Executions: a `doPost` at the ITN time). Rows and emails arrive
+regardless. PayFast may retry; `handleItn_` ignores a repeat of the same PayFast ID + status.
 
 ## 5. Go live
 

@@ -6,10 +6,14 @@
 // 3. PayFast ITN (notify_url) POSTs form-encoded payment notifications -> verified, logged, emailed.
 //
 // Script Properties required for PayFast (Project Settings -> Script Properties):
-//   PF_MERCHANT_ID   e.g. 10000100 (sandbox) or your live merchant ID
-//   PF_MERCHANT_KEY  e.g. 46f0cd694581a (sandbox) or your live merchant key
-//   PF_PASSPHRASE    sandbox: jt7NOE43FZPn   live: the passphrase you set under Settings -> Integration
+//   PF_MERCHANT_ID   your sandbox merchant ID, later your live merchant ID
+//   PF_MERCHANT_KEY  your sandbox merchant key, later your live merchant key
+//   PF_PASSPHRASE    the passphrase you set under Settings -> Integration (sandbox or live)
 //   PF_SANDBOX       'true' while testing, 'false' when live
+//
+// Note: Apps Script answers every POST with a 302, which PayFast's notifier reports as "cURL Error" and
+// may retry. The script has already run by then, so rows and emails still arrive; handleItn_ ignores
+// a repeat of the same pf_payment_id + payment_status so retries do not duplicate rows.
 
 const FOLDER_NAME = 'Soutpans Road Closure - Consent forms';
 const TRACKER_NAME = 'Soutpans consent tracker';
@@ -17,7 +21,7 @@ const CONTRIB_NAME = 'Soutpans contributions';
 const NOTIFY_EMAIL = 'mcgowanjustin1@gmail.com';
 const SITE_URL = 'https://justin-mcgowan-servaro.github.io/soutpans-consent/';
 const TZ = 'Africa/Johannesburg';
-const MIN_AMOUNT = 20, MAX_AMOUNT = 5000;
+const MIN_AMOUNT = 100, MAX_AMOUNT = 5000;
 
 function doPost(e) {
   const raw = (e && e.postData && e.postData.contents) || '';
@@ -136,18 +140,16 @@ function handleItn_(raw) {
     const str = paramString_(noSig);
     const expected = md5_(str + (cfg.passphrase ? '&passphrase=' + pfEncode_(cfg.passphrase) : ''));
     const sigOk = expected === (d.signature || '').toLowerCase();
-    let serverOk = false;
-    try {
-      const res = UrlFetchApp.fetch(cfg.host + '/eng/query/validate',
-        { method: 'post', payload: str, contentType: 'application/x-www-form-urlencoded', muteHttpExceptions: true });
-      serverOk = res.getContentText().trim() === 'VALID';
-    } catch (e) { serverOk = false; }
+    const server = validateWithPayfast_(cfg, str);
     const merchantOk = String(d.merchant_id) === String(cfg.merchantId);
-    const verdict = (sigOk && serverOk && merchantOk) ? 'verified'
-      : 'UNVERIFIED (sig ' + sigOk + ', server ' + serverOk + ', merchant ' + merchantOk + ')';
+    const verdict = (sigOk && server.ok && merchantOk) ? 'verified'
+      : 'UNVERIFIED (sig ' + sigOk + ', server ' + server.ok + (server.ok ? '' : ' [' + server.detail + ']') + ', merchant ' + merchantOk + ')';
+
+    const sheet = contribSheet_();
+    if (d.pf_payment_id && alreadyLogged_(sheet, d.pf_payment_id, d.payment_status)) return out;   // PayFast retry
 
     const name = ((d.name_first || '') + ' ' + (d.name_last || '')).trim();
-    contribSheet_().appendRow([new Date(), d.payment_status || '?', d.custom_str2 || '', d.custom_str1 || '', name, d.email_address || '', '',
+    sheet.appendRow([new Date(), d.payment_status || '?', d.custom_str2 || '', d.custom_str1 || '', name, d.email_address || '', '',
       Number(d.amount_gross || 0), d.custom_str3 || '', d.billing_date || '', Number(d.amount_fee || 0), Number(d.amount_net || 0),
       d.token || '', d.m_payment_id || '', d.pf_payment_id || '', verdict]);
 
@@ -163,6 +165,26 @@ function handleItn_(raw) {
     try { GmailApp.sendEmail(NOTIFY_EMAIL, 'Road closure contribution: ITN error', String(err) + '\n\n' + raw); } catch (e2) {}
   }
   return out;
+}
+
+// Asks PayFast to confirm the notification really came from them. Returns {ok, detail}.
+function validateWithPayfast_(cfg, paramString) {
+  try {
+    const res = UrlFetchApp.fetch(cfg.host + '/eng/query/validate',
+      { method: 'post', payload: paramString, contentType: 'application/x-www-form-urlencoded', muteHttpExceptions: true });
+    const body = res.getContentText().trim();
+    return { ok: body === 'VALID', detail: 'HTTP ' + res.getResponseCode() + ' ' + body.slice(0, 80) };
+  } catch (e) {
+    return { ok: false, detail: String(e).slice(0, 120) };
+  }
+}
+
+// True when a row with this PayFast ID and status is already in the sheet (ITN retries).
+function alreadyLogged_(sheet, pfId, status) {
+  const last = sheet.getLastRow();
+  if (last < 2) return false;
+  const rows = sheet.getRange(2, 2, last - 1, 14).getValues();   // Event .. PayFast ID
+  return rows.some(function (r) { return String(r[13]) === String(pfId) && String(r[0]) === String(status); });
 }
 
 // --------------------------------------------------------------- helpers ---
@@ -213,10 +235,9 @@ function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Run once from the editor to eyeball the signature string format (spaces as +, upper-case hex).
-function testSignature_() {
-  const s = paramString_([['name_first', 'John'], ['name_last', 'Doe'], ['email_address', 'john@example.com'],
-    ['amount', '100.00'], ['item_name', 'Test Product & co']]);
-  Logger.log(s);
-  Logger.log(md5_(s + '&passphrase=' + pfEncode_('jt7NOE43FZPn')));
+// Run once from the editor after deploying: confirms the script may call PayFast (UrlFetch scope)
+// and that the validate endpoint answers. Expect "HTTP 200 INVALID" for this made-up payload.
+function testPayfastReachable() {
+  const cfg = pfConfig_();
+  Logger.log(validateWithPayfast_(cfg, 'm_payment_id=test&pf_payment_id=0&payment_status=COMPLETE&merchant_id=' + cfg.merchantId));
 }

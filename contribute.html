@@ -103,6 +103,10 @@
           <input id="house" inputmode="numeric" autocomplete="off">
           <div class="err">Please enter the house number.</div>
         </div>
+        <div class="f">
+          <label for="unit">Unit <span class="opt">(if in a complex)</span></label>
+          <input id="unit" autocomplete="off" placeholder="e.g. 4">
+        </div>
       </div>
       <div class="f" data-req id="streetOtherWrap" hidden>
         <label for="streetOther">Street name</label>
@@ -152,9 +156,9 @@
         <button type="button" data-amt="other" aria-pressed="false">Other</button>
       </div>
       <div class="f" id="otherWrap" hidden>
-        <label for="amount">Your amount <span class="opt">(R20 to R5 000)</span></label>
+        <label for="amount">Your amount <span class="opt">(R100 to R5 000)</span></label>
         <div class="amtwrap"><span>R</span><input id="amount" inputmode="numeric" placeholder="e.g. 300"></div>
-        <div class="err">Please enter an amount between R20 and R5 000.</div>
+        <div class="err">Please enter an amount between R100 and R5 000.</div>
       </div>
 
       <div class="f" id="dayWrap" data-req>
@@ -211,6 +215,7 @@ streetSel.addEventListener('change', () => {
   updateSummary();
 });
 $('house').addEventListener('input', updateSummary);
+$('unit').addEventListener('input', updateSummary);
 streetOther.addEventListener('input', updateSummary);
 
 // ---- Type / amount / day --------------------------------------------------
@@ -245,11 +250,14 @@ function firstDebitDate(day) {
   return new Date(y, m, day);
 }
 function fmtDate(d) { return d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }); }
-function houseLabel() { const n = $('house').value.trim(), st = streetName(); return n && st ? `${n} ${st}` : ''; }
+function houseLabel() {
+  const n = $('house').value.trim(), st = streetName(), u = $('unit').value.trim();
+  return n && st ? `${n} ${st}` + (u ? `, unit ${u}` : '') : '';
+}
 
 function updateSummary() {
   const s = $('summary'), amt = state.amt, hl = houseLabel();
-  if (!(amt >= 20)) { s.className = 'summary quiet'; s.textContent = 'Choose an amount to see what will be debited.'; return; }
+  if (!(amt >= 100)) { s.className = 'summary quiet'; s.textContent = 'Choose an amount to see what will be debited.'; return; }
   s.className = 'summary';
   if (state.type === 'monthly') {
     const day = Number(daySel.value);
@@ -277,8 +285,8 @@ function validate() {
   need('firstName', v => v.length > 0);
   need('lastName', v => v.length > 0);
   need('email', v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v));
-  if (!$('otherWrap').hidden) need('amount', v => Number(v) >= 20 && Number(v) <= 5000);
-  else if (!(state.amt >= 20 && state.amt <= 5000)) ok = false;
+  if (!$('otherWrap').hidden) need('amount', v => Number(v) >= 100 && Number(v) <= 5000);
+  else if (!(state.amt >= 100 && state.amt <= 5000)) ok = false;
   if (firstBad) firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
   return ok;
 }
