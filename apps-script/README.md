@@ -85,13 +85,13 @@ Update Script Properties:
 | `PF_PASSPHRASE` | the passphrase you set |
 | `PF_SANDBOX` | `false` |
 
-No redeploy is needed for a property change. Do one real R20 monthly test on your own card, then cancel it under Recurring billing.
+No redeploy is needed for a property change. Do one real R100 monthly test on your own card, then cancel it under Transactions, Customer Subscriptions.
 
 ## How a monthly contribution is set up
 
-- Initial `amount` is `0.00` so nothing is charged at sign-up; PayFast tokenises the card.
+- Initial `amount` equals the chosen amount, so the first debit is taken at sign-up and PayFast tokenises the card.
 - `billing_date` is today: the first debit is taken immediately and PayFast repeats it on the same day each month.
 - `recurring_amount` is the chosen amount, `frequency=3` (monthly), `cycles=0` (until cancelled).
-- Cancel or pause from the PayFast dashboard, Recurring billing; the payer gets an email.
+- Cancel or pause from the PayFast dashboard, Transactions, Customer Subscriptions; the payer gets an email.
 
 Tracker columns ("Soutpans contributions" sheet, same Drive folder as the consent forms): When, Event (Started / COMPLETE / CANCELLED), Type, House, Name, Email, Cell, Amount, Debit day, Billing date, Fee, Net, Token, Reference, PayFast ID, Check.
