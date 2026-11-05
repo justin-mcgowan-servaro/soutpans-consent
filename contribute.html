@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Road Closure Contributions</title>
-<meta name="description" content="Set up a monthly or once-off contribution to the Quellerina road closure project, debited on the day you choose.">
+<meta name="description" content="Set up a monthly or once-off contribution to the Quellerina road closure project, debited monthly from the day you sign up.">
 <style>
   :root {
     --bg: #f4f5f2; --card: #ffffff; --ink: #1d2320; --muted: #5d665f;
@@ -67,13 +67,12 @@
 <body>
 <main>
   <h1>Quellerina road closure: contributions</h1>
-  <p class="sub">Choose an amount and the day of the month that suits you. Your card is debited by PayFast on that day, every month, until you ask to stop.</p>
+  <p class="sub">Choose an amount. Your card is debited by PayFast today and then on the same day every month, until you ask to stop.</p>
 
   <section class="card note" id="intro">
     <h2>How it works</h2>
     <ul>
-      <li><strong>You pick the day.</strong> Choose the date your salary lands and the debit follows it every month.</li>
-      <li><strong>Nothing is charged today</strong> for a monthly contribution. The first debit happens on your chosen day.</li>
+      <li><strong>The first debit happens today.</strong> After that PayFast debits the same amount on the same day each month.</li>
       <li><strong>Card payments only</strong>, handled by <strong>PayFast</strong> (used by thousands of SA businesses). We never see or store your card number.</li>
       <li><strong>Stop any time</strong> by messaging Justin. Funds are held for the road closure project and accounted for to the street.</li>
     </ul>
@@ -161,16 +160,11 @@
         <div class="err">Please enter an amount between R100 and R5 000.</div>
       </div>
 
-      <div class="f" id="dayWrap" data-req>
-        <label for="day">Debit day of the month <span class="opt">(pick the day after your salary lands)</span></label>
-        <select id="day"></select>
-      </div>
-
       <div class="summary" id="summary"></div>
     </section>
 
     <button type="submit" class="primary" id="submitBtn">Continue to secure payment</button>
-    <p class="small" style="margin-top:10px">You will be taken to PayFast to enter your card details. For a monthly contribution PayFast verifies the card now and takes the first debit on your chosen day.</p>
+    <p class="small" style="margin-top:10px">You will be taken to PayFast to enter your card details. For a monthly contribution PayFast takes the first debit now and repeats it monthly.</p>
     <p class="fail" id="failMsg" hidden></p>
   </form>
 
@@ -195,7 +189,7 @@ const state = { type: 'monthly', amt: 150 };
   $('form').hidden = true; $('intro').hidden = true; $('doneCard').hidden = false;
   if (q.get('done') === 'monthly') {
     $('doneTitle').textContent = '✅ Thank you, your monthly contribution is set up';
-    $('doneText').innerHTML = 'PayFast has verified your card and will debit it on the day you chose each month. You will get an email from PayFast before each debit. <strong>There is nothing else you need to do.</strong>';
+    $('doneText').innerHTML = 'PayFast has taken the first debit and will debit the same amount on this day each month. You will get an email from PayFast before each debit. <strong>There is nothing else you need to do.</strong>';
   } else if (q.get('done') === 'once') {
     $('doneTitle').textContent = '✅ Thank you for your contribution';
     $('doneText').innerHTML = 'Your once-off payment has gone through. PayFast will email you a receipt.';
@@ -223,7 +217,6 @@ $('typeSeg').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   state.type = b.dataset.type;
   [...$('typeSeg').children].forEach(x => x.setAttribute('aria-pressed', x === b));
-  $('dayWrap').hidden = state.type !== 'monthly';
   updateSummary();
 });
 $('tiles').addEventListener('click', e => {
@@ -237,19 +230,8 @@ $('tiles').addEventListener('click', e => {
 });
 $('amount').addEventListener('input', () => { state.amt = Number($('amount').value) || 0; $('otherWrap').classList.remove('invalid'); updateSummary(); });
 
-const daySel = $('day');
 const today = new Date().getDate();
-for (let d = 1; d <= 28; d++) { const o = document.createElement('option'); o.value = d; o.textContent = ordinal(d); daySel.appendChild(o); }
-daySel.value = Math.min(28, today <= 25 ? 25 : 1);     // sensible default: 25th
-daySel.addEventListener('change', updateSummary);
-
 function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-function firstDebitDate(day) {
-  const now = new Date(); let y = now.getFullYear(), m = now.getMonth();
-  if (day <= now.getDate()) m += 1;                    // today or earlier -> next month (today itself is charged today)
-  return new Date(y, m, day);
-}
-function fmtDate(d) { return d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }); }
 function houseLabel() {
   const n = $('house').value.trim(), st = streetName(), u = $('unit').value.trim();
   return n && st ? `${n} ${st}` + (u ? `, unit ${u}` : '') : '';
@@ -260,9 +242,8 @@ function updateSummary() {
   if (!(amt >= 100)) { s.className = 'summary quiet'; s.textContent = 'Choose an amount to see what will be debited.'; return; }
   s.className = 'summary';
   if (state.type === 'monthly') {
-    const day = Number(daySel.value);
-    const first = day === today ? 'today, then on the ' + ordinal(day) + ' of every month' : 'on ' + fmtDate(firstDebitDate(day)) + ', then on the ' + ordinal(day) + ' of every month';
-    s.textContent = `R${amt} will be debited ${first}${hl ? ' for ' + hl : ''}.`;
+    const repeat = today <= 28 ? 'on the ' + ordinal(today) + ' of every month' : 'monthly on the same day';
+    s.textContent = `R${amt} will be debited today, then ${repeat}${hl ? ' for ' + hl : ''}.`;
   } else {
     s.textContent = `R${amt} once-off${hl ? ' for ' + hl : ''}, charged now.`;
   }
@@ -296,7 +277,7 @@ $('form').addEventListener('submit', async e => {
   $('failMsg').hidden = true;
   if (!validate()) return;
   const payload = {
-    kind: 'contribution', type: state.type, amount: state.amt, day: Number(daySel.value),
+    kind: 'contribution', type: state.type, amount: state.amt,
     house: houseLabel(), firstName: $('firstName').value.trim(), lastName: $('lastName').value.trim(),
     email: $('email').value.trim(), cell: $('cell').value.trim(),
   };

@@ -74,12 +74,10 @@ function signContribution_(b) {
   const house = clean_(b.house, 100);                                   // e.g. "13 Soutpans"
   const monthly = b.type === 'monthly';
   const amount = Math.round(Number(b.amount));
-  const day = Number(b.day);
   if (!first || !last) throw new Error('Name is required.');
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('A valid email is required.');
   if (!house) throw new Error('House is required.');
   if (!(amount >= MIN_AMOUNT && amount <= MAX_AMOUNT)) throw new Error('Amount must be between R' + MIN_AMOUNT + ' and R' + MAX_AMOUNT + '.');
-  if (monthly && !(day >= 1 && day <= 28)) throw new Error('Debit day must be between 1 and 28.');
 
   const now = new Date();
   const ref = 'SP-' + Utilities.formatDate(now, TZ, 'yyyyMMdd-HHmmss') + '-' + Math.floor(1000 + Math.random() * 9000);
@@ -94,19 +92,11 @@ function signContribution_(b) {
   ];
   let desc, firstDebit = null;
   if (monthly) {
-    // Charge nothing today; PayFast tokenises the card and takes the first debit on the chosen day.
-    // If the chosen day is today, charge today and set the next debit one month on.
-    const today = Number(Utilities.formatDate(now, TZ, 'd'));
-    const y = Number(Utilities.formatDate(now, TZ, 'yyyy')), m = Number(Utilities.formatDate(now, TZ, 'M'));
-    let initial = '0.00';
-    let bd;
-    if (day === today) { initial = amt; bd = new Date(y, m, day); }            // next month
-    else if (day > today) bd = new Date(y, m - 1, day);                         // later this month
-    else bd = new Date(y, m, day);                                              // next month
-    firstDebit = Utilities.formatDate(bd, TZ, 'yyyy-MM-dd');
-    desc = house + ': R' + amount + ' monthly on day ' + day;
-    fields.push(['amount', initial], ['item_name', 'Road closure contribution (monthly)'], ['item_description', desc],
-      ['custom_str1', house], ['custom_str2', 'monthly'], ['custom_str3', String(day)],
+    // First debit today; PayFast then repeats it on the same day of each month (billing_date = today).
+    firstDebit = Utilities.formatDate(now, TZ, 'yyyy-MM-dd');
+    desc = house + ': R' + amount + ' monthly from ' + firstDebit;
+    fields.push(['amount', amt], ['item_name', 'Road closure contribution (monthly)'], ['item_description', desc],
+      ['custom_str1', house], ['custom_str2', 'monthly'], ['custom_str3', Utilities.formatDate(now, TZ, 'd')],
       ['subscription_type', '1'], ['billing_date', firstDebit], ['recurring_amount', amt], ['frequency', '3'], ['cycles', '0']);
   } else {
     desc = house + ': once-off R' + amount;
@@ -118,7 +108,7 @@ function signContribution_(b) {
   fields.push(['signature', sig]);
 
   contribSheet_().appendRow([now, 'Started', monthly ? 'monthly' : 'once', house, first + ' ' + last, email, cell,
-    amount, monthly ? day : '', firstDebit || '', '', '', '', ref, '', cfg.sandbox ? 'sandbox' : 'live']);
+    amount, monthly ? Utilities.formatDate(now, TZ, 'd') : '', firstDebit || '', '', '', '', ref, '', cfg.sandbox ? 'sandbox' : 'live']);
 
   return { ok: true, action: cfg.host + '/eng/process', fields: fields, firstDebit: firstDebit, ref: ref };
 }

@@ -59,7 +59,7 @@ The first run that touches Drive/Gmail/UrlFetch may ask you to re-authorise the 
 ## 4. Sandbox test
 
 1. Open https://justin-mcgowan-servaro.github.io/soutpans-consent/contribute.html
-2. Monthly, R150, pick a day a few days from now, your own email. Continue.
+2. Monthly, R150, your own email. Continue.
 3. On the PayFast sandbox page pay with the sandbox buyer wallet or test card it offers.
    Use a different email from the sandbox account's own, e.g. `you+test@gmail.com`: PayFast refuses a buyer
    whose email equals the merchant's ("Merchant is unable to receive payments from the same account").
@@ -90,7 +90,7 @@ No redeploy is needed for a property change. Do one real R20 monthly test on you
 ## How a monthly contribution is set up
 
 - Initial `amount` is `0.00` so nothing is charged at sign-up; PayFast tokenises the card.
-- `billing_date` is the next occurrence of the chosen day (1 to 28). If the chosen day is today, today is charged and billing continues next month.
+- `billing_date` is today: the first debit is taken immediately and PayFast repeats it on the same day each month.
 - `recurring_amount` is the chosen amount, `frequency=3` (monthly), `cycles=0` (until cancelled).
 - Cancel or pause from the PayFast dashboard, Recurring billing; the payer gets an email.
 
