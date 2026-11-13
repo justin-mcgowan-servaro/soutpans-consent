@@ -92,8 +92,12 @@
         <div class="f" data-req>
           <label for="street">Street</label>
           <select id="street">
-            <option>Soutpans</option><option>Sophia</option><option>Kessel</option><option>Johannes</option>
-            <option>Short</option><option>Wilson</option><option>Badenhorst</option>
+          <option>Soutpans Avenue</option><option>Sophia Street</option><option>Kessel Street</option>
+            <option>Short Street</option><option>Johannes Street</option><option>Badenhorst Street</option>
+            <option>Ohlhoff Road</option><option>Norman Drive</option><option>Ash Street</option>
+            <option>Imbuia Street</option><option>Valerie Avenue</option><option>Elm Street</option>
+            <option>Mahogany Street</option><option>Oregon Street</option><option>Cedar Road</option>
+            <option>Bagley Terrace</option><option>Wilson Street</option>
             <option value="__other">Other street…</option>
           </select>
         </div>
@@ -202,6 +206,7 @@ const state = { type: 'monthly', amt: 150 };
 // ---- Street ---------------------------------------------------------------
 const streetSel = $('street'), streetOther = $('streetOther');
 const streetName = () => streetSel.value === '__other' ? streetOther.value.trim().replace(/\s+/g, ' ') : streetSel.value;
+const shortStreet = st => st.replace(/\s+(Avenue|Ave|Street|St|Road|Rd|Drive|Dr|Terrace)\.?$/i, '');   // "Sophia Street" -> "Sophia"
 streetSel.addEventListener('change', () => {
   const other = streetSel.value === '__other';
   $('streetOtherWrap').hidden = !other;
@@ -233,7 +238,7 @@ $('amount').addEventListener('input', () => { state.amt = Number($('amount').val
 const today = new Date().getDate();
 function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
 function houseLabel() {
-  const n = $('house').value.trim(), st = streetName(), u = $('unit').value.trim();
+  const n = $('house').value.trim(), st = shortStreet(streetName()), u = $('unit').value.trim();
   return n && st ? `${n} ${st}` + (u ? `, unit ${u}` : '') : '';
 }
 

@@ -83,8 +83,12 @@
       <div class="f" data-req>
         <label for="street">Street</label>
         <select id="street">
-          <option>Soutpans</option><option>Sophia</option><option>Kessel</option><option>Johannes</option>
-          <option>Short</option><option>Wilson</option><option>Badenhorst</option>
+          <option>Soutpans Avenue</option><option>Sophia Street</option><option>Kessel Street</option>
+          <option>Short Street</option><option>Johannes Street</option><option>Badenhorst Street</option>
+          <option>Ohlhoff Road</option><option>Norman Drive</option><option>Ash Street</option>
+          <option>Imbuia Street</option><option>Valerie Avenue</option><option>Elm Street</option>
+          <option>Mahogany Street</option><option>Oregon Street</option><option>Cedar Road</option>
+          <option>Bagley Terrace</option><option>Wilson Street</option>
           <option value="__other">Other street…</option>
         </select>
       </div>
@@ -242,6 +246,10 @@ const streetSel = document.getElementById('street'), streetOther = document.getE
 function streetName() {
   return streetSel.value === '__other' ? streetOther.value.trim().replace(/\s+/g, ' ') : streetSel.value;
 }
+// "Sophia Street" -> "Sophia": used for the house label, file name and email subject.
+function shortStreet(st) {
+  return st.replace(/\s+(Avenue|Ave|Street|St|Road|Rd|Drive|Dr|Terrace)\.?$/i, '');
+}
 streetSel.addEventListener('change', () => {
   const other = streetSel.value === '__other';
   document.getElementById('streetOtherWrap').hidden = !other;
@@ -254,7 +262,7 @@ addr.addEventListener('input', () => addrEdited = addr.value.trim() !== '');
 function fillAddress() {
   if (addrEdited) return;
   const n = document.getElementById('house').value.trim(), st = streetName();
-  addr.value = n ? `${[n, st === 'Soutpans' ? 'Soutpans Avenue' : st].filter(Boolean).join(' ')}, Quellerina` : '';
+  addr.value = n ? `${[n, st].filter(Boolean).join(' ')}, Quellerina` : '';
   if (n) addr.closest('.f').classList.remove('invalid');
 }
 document.getElementById('house').addEventListener('input', fillAddress);
@@ -408,7 +416,8 @@ document.getElementById('form').addEventListener('submit', async e => {
       })
     };
     const bytes = await buildPdf(data);
-    data.label = street === 'Soutpans' ? data.house : `${data.house} ${street}`;
+    const short = shortStreet(street);
+    data.label = short === 'Soutpans' ? data.house : `${data.house} ${short}`;
     const fname = `Soutpans consent - House ${clean(data.label).replace(/[\\/:*?"<>|]/g, '-')}.pdf`;
     pdfFile = new File([bytes], fname, { type: 'application/pdf' });
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
