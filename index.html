@@ -60,6 +60,12 @@
   .spinner { width: 46px; height: 46px; margin: 0 auto 14px; border-radius: 50%;
     border: 5px solid var(--line); border-top-color: var(--accent); animation: spin .9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  details.terms summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
+  details.terms summary::-webkit-details-marker { color: var(--accent); }
+  details.terms h3 { font-size: 15px; margin: 14px 0 6px; }
+  details.terms blockquote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: rgba(0,0,0,.03); }
+  details.terms blockquote p, details.terms blockquote ul { margin: 4px 0; }
+  details.terms ul { padding-left: 20px; }
 </style>
 </head>
 <body>
@@ -76,6 +82,35 @@
       <li>Your form is sent <strong>privately to Justin</strong> (his email and Google Drive) and used only for the road closure application.</li>
     </ul>
   </section>
+
+  <details class="card terms" id="terms">
+    <summary>What exactly am I signing? Read the wording and what the application asks for</summary>
+
+    <h3>The wording placed on your form</h3>
+    <p class="small">Your answers are typed onto the City of Johannesburg consent form, which is addressed to the City and reads:</p>
+    <blockquote class="small">
+      <p><strong>RE: Security access restriction application for the temporary closure of [your street]</strong><br>
+      in terms of Section 45 of the Rationalisation of Local Government Affairs Act 10 of 1998</p>
+      <p>I/We the undersigned:</p>
+      <ul>
+        <li>are aware of the proposed application;</li>
+        <li>hereby support the renewal of the closure;</li>
+        <li>have read and understood the application;</li>
+        <li>support the application for the reasons set out in the application.</li>
+      </ul>
+      <p>followed by your name, address, role (owner, resident, tenant or employee), contact details, signature and date.</p>
+    </blockquote>
+
+    <h3>What the application asks for</h3>
+    <ul class="small">
+      <li><strong>A security access restriction</strong> (a road closure) for the streets south of 14th Avenue between Sophia Street and Elm Street, down to Soutpans Avenue: Soutpans, Sophia, Kessel, Short, Johannes, Wilson, Badenhorst, Ohlhoff, Norman, Ash, Imbuia, Valerie, Elm, Mahogany and Oregon.</li>
+      <li><strong>Controlled entrances</strong> to the area. The exact closure points are still to be agreed with the City. Residents, visitors, deliveries and emergency services keep access; the aim is to stop through-traffic and give the area a guarded, camera-covered boundary.</li>
+      <li><strong>Why:</strong> our own security with quick response, quieter and safer roads for children, walkers and animals, and a neighbourhood where people know each other.</li>
+      <li><strong>Run by residents.</strong> The closure is managed by a residents' association and funded by voluntary contributions. Signing this consent does not commit you to any payment.</li>
+      <li><strong>Temporary by law.</strong> The City grants these closures for a fixed period and reviews them, which is why the form speaks of a renewal.</li>
+    </ul>
+    <p class="small">The full application document will be linked here once it is lodged with the City. If you have a question before you sign, message Justin.</p>
+  </details>
 
   <form id="form" novalidate>
     <section class="card">
